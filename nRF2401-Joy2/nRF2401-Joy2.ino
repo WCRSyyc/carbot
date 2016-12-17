@@ -12,7 +12,7 @@ struct txMessStru{
 //  char messBuff[ 80 ];
   int x, y, z; 
 };
-const unsigned long PACKET_DELAY = 500; // milliseconds (0.5 seconds)
+const unsigned long PACKET_DELAY = 1500; // milliseconds (0.5 seconds)
 
 txMessStru myMessage;
 int ptr;                    // index into message buffer
@@ -48,6 +48,9 @@ void setup() {
  
   radio.setPALevel(RF24_PA_LOW);
 
+  Serial.print("Joystick Starting up as radio ");
+  Serial.println ( radioNumber );
+
   // Open a pipe to write to the radio
   radio.openWritingPipe(addresses[0]);
   radio.stopListening();    
@@ -75,6 +78,12 @@ void getSensorData()
   myMessage.x = map( sensorValueX, 0, 1023, -255, 255 );
   myMessage.y = map( sensorValueY, 0, 1023, 255, -255 );
   myMessage.z = map( sensorValueZ, 0, 1, 1, 0 );
+  Serial.print ( "Packet: x=" );
+  Serial.print ( myMessage.x );
+  Serial.print ( ", y=" );
+  Serial.print ( myMessage.y );
+  Serial.print ( ", z=" );
+  Serial.println ( myMessage.z );
 } // ./getSensorData()
 
 /*

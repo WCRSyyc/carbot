@@ -11,8 +11,15 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
-Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+#define MAX_MOTOR_SPEED 255
+#define MIN_MOTOR_SPEED -255
+#define MAX_MOTOR_STEP 10
+#define MIN_SPEED 10
+// names for motor indexes
+#define LEFT 0
+#define RIGHT 1
 
+Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *myMotorL = AFMS.getMotor(1);
@@ -28,174 +35,145 @@ bool radioNumber = 1;
 RF24 radio(7,8);
 /**********************************************************/
 
-struct txMessStru{
+struct txMessStru {
   int buffType;
-//  char messBuff[80];
    int x,y,z;
 };
+// x and y can be in the range -255 to 255
+// z is zero or one
 
-//txMessStru myMessage ={0, "abcdefghi"};
 txMessStru myMessage;
-
-int xL, xR;   // working value for motor speed Left + Right
+const unsigned int MOTOR_COUNT = 2;
+int curSpeed[MOTOR_COUNT];
+int targSpeed[MOTOR_COUNT];
 
 byte addresses[][6] = {"1Node","2Node"};
 
-// Used to control whether this node is sending or receiving
-//bool role = 0;
-
 void setup() {
   Serial.begin(115200);
-  Serial.println(F("RF24 receive string"));
-  Serial.print(F("radioNumber is "));
-  Serial.println(radioNumber);
-
-  Serial.println("Adafruit Motorshield v2 - DC Motor test!");
+  Serial.print(F("WCRS carbot; RF245 radioNumber is "));
+  Serial.print(radioNumber);
+  Serial.println(" using Adafruit Motorshield");
 
   AFMS.begin();  // create with the default frequency 1.6KHz
-  //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
-  
-  // Set the speed to start, from 0 (off) to 255 (max speed)
-  //myMotor->setSpeed(150);
- // myMotor->run(FORWARD);
-  // turn on motor
+
+  myMotorL->setSpeed(curSpeed[LEFT]);
+  myMotorR->setSpeed(curSpeed[RIGHT]);
   myMotorL->run(RELEASE);
   myMotorR->run(RELEASE);
-  
+
   radio.begin();
 
   // Set the PA Level low to prevent power supply related issues since this is a
- // getting_started sketch, and the likelihood of close proximity of the devices. RF24_PA_MAX is default.
+  // getting_started sketch, and the likelihood of close proximity of the devices. RF24_PA_MAX is default.
   radio.setPALevel(RF24_PA_LOW);
 
   // Open a writing and reading pipe on each radio, with opposite addresses
-  if(radioNumber){
-    radio.openWritingPipe(addresses[1]);
+//  if(radioNumber){
+//    radio.openWritingPipe(addresses[1]);
     radio.openReadingPipe(1,addresses[0]);
-  }else{
-    radio.openWritingPipe(addresses[0]);
-    radio.openReadingPipe(1,addresses[1]);
-  }
+//  }else{
+//    radio.openWritingPipe(addresses[0]);
+//    radio.openReadingPipe(1,addresses[1]);
+//  }
 
   // Start the radio listening for data
   radio.startListening();
 }
 
 void loop() {
+  while (radio.available()) {                     // While there is data ready
+    //Serial.println("available");
+    radio.read( &myMessage, sizeof(txMessStru) );  // Get the payload one char only
 
+    Serial.print("raw: ");
+    Serial.print(myMessage.x);
+    Serial.print(", ");
+    Serial.print(myMessage.y);
+    Serial.print(", ");
+    Serial.println(myMessage.z);
 
-/****************** Ping Out Role ***************************/  
+    targSpeed[LEFT] = myMessage.y;
+    targSpeed[RIGHT] = myMessage.y;
 
- //radio.startListening();                                    // Now, continue listening
-/*
-    while ( ! radio.available() ){                             // While nothing is received
-      if (micros() - started_waiting_at > 200000 ){            // If waited longer than 200ms, indicate timeout and exit while loop
-          timeout = true;
-          break;
-      }      
-    }
-*/
-  
-                                                                     // Variable for the received timestamp
-   while (radio.available()) {                     // While there is data ready
-      //Serial.println("available");
-      radio.read( &myMessage, sizeof(txMessStru) );  // Get the payload one char only
-     
-   Serial.print("before turn bias: ");
-   Serial.print(myMessage.x);
-   Serial.print(", ");
-   Serial.print(myMessage.y);
-   Serial.print(", ");
-   Serial.println(myMessage.z);
+    calcTurnSpeed();
 
-  
-    if(myMessage.y < 0){  //turn Left 
-       myMessage.y = abs(myMessage.y);
-       xL -= myMessage.y;
-       xR += myMessage.y;
-    }else if(myMessage.y > 0){  //turn Right  
-       xL += myMessage.y;
-       xR -= myMessage.y;
-    }
+    curSpeed[ LEFT ]  = calcMotorSpeed ( curSpeed[ LEFT ],  targSpeed[ LEFT] );
+    curSpeed[ RIGHT ] = calcMotorSpeed ( curSpeed[ RIGHT ], targSpeed[ RIGHT ]);
 
-   Serial.print("before forward bias: ");
-   Serial.print(myMessage.x);
-   Serial.print(", ");
-   Serial.print(myMessage.y);
-   Serial.print(", ");
-   Serial.println(myMessage.z);
+    Serial.print("new: L=");
+    Serial.print(curSpeed[ LEFT ]);
+    Serial.print(", R=");
+    Serial.println(curSpeed[ RIGHT ]);
 
-  
-    if(myMessage.x < 0){  //backward
-       myMessage.x = abs(myMessage.x);
-       xL -= myMessage.x;
-       xR -= myMessage.x;
-    }else if(myMessage.x > 0){  //forward  
-       xL += myMessage.x;
-       xR += myMessage.x;
-    }
-   Serial.print("after forward bias xL, xR: ");
-   Serial.print(xL);
-   Serial.print(", ");
-   Serial.println(xR);
-
-   if (xL < -255) { xL = -255;}  // trim to max value
-   if (xL >  255) { xL =  255;} 
-   if (xR < -255) { xR = -255;}
-   if (xR >  255) { xR =  255;} 
-
-   Serial.print("after limit trim xL, xR: ");
-   Serial.print(xL);
-   Serial.print(", ");
-   Serial.println(xR);
-    
-  
- 
-   // set both motor speeds
-     if ( xL < 0){   //negative speed == reverse
-        myMotorL->run(BACKWARD);
-        xL += abs(xL);
-        Serial.print("Back L ");
-        Serial.println(xL);
-       if (xL < -10){
-          myMotorL->setSpeed(xL); 
-       }else{
-        myMotorL->run(RELEASE);
-       }
-     } else if (xL > 0){
-       myMotorL->run(FORWARD);
-       Serial.print("Forward L ");
-       Serial.println(xL);
-       if (xL > 10){
-          myMotorL->setSpeed(xL); 
-       }else{
-        myMotorL->run(RELEASE);
-       }
-       
-     } if ( xR < 0){   //negative speed == reverse
-        myMotorR->run(BACKWARD);
-        xR += abs(xR);
-        Serial.print("Backward R ");
-        Serial.println(xR);
-       if (xR < -10){
-          myMotorR->setSpeed(xR); 
-       }else{
-        myMotorR->run(RELEASE);
-       }
-     } else if (xR > 0){
-       myMotorL->run(FORWARD);
-       Serial.print("Forward R ");
-       Serial.println(xR);
-       if (xL > 10){
-          myMotorR->setSpeed(xR); 
-       }else{
-        myMotorR->run(RELEASE);
-       }
-     }
- 
-   //Serial.println(myMessage.messBuff);
-
-   } // end of while radio avail
+    Serial.print("LEFT ");
+    setMotorSpeed(myMotorL, curSpeed[LEFT]);
+    Serial.print("RIGHT ");
+    setMotorSpeed(myMotorR, curSpeed[RIGHT]);
+  } // end of while radio avail
 }    //loop     
 
+void calcTurnSpeed()
+{
+  // adjust targSpeed left and right from myMessage.x
+}
+
+// use current and target speeds to get a new speed value to set
+int calcMotorSpeed( int cur, int targ )
+{
+  int newSpeed;
+  Serial.print("calc from cur= ");
+  Serial.print(cur);
+  Serial.print(", targ=");
+  Serial.println(targ);
+  if ( targ < cur ) {
+    Serial.println("targ < cur");
+    if ( cur - MAX_MOTOR_STEP < targ ) {
+      newSpeed = targ;
+    } else {
+      newSpeed = cur - MAX_MOTOR_STEP;
+    }
+  } else { // targ >= cur
+    Serial.println("targ > cur");
+    if ( cur + MAX_MOTOR_STEP > targ ) {
+      newSpeed = targ;
+    } else {
+      newSpeed = cur - MAX_MOTOR_STEP;
+    }
+  }
+  if ( newSpeed < MIN_MOTOR_SPEED) {
+    Serial.println("min limit");
+    newSpeed = MIN_MOTOR_SPEED;
+  }
+  if ( newSpeed > MAX_MOTOR_SPEED) {
+    Serial.println("max limit");
+    newSpeed = MAX_MOTOR_SPEED;
+  }
+  Serial.print("new =");
+  Serial.println(newSpeed);
   
+  return newSpeed;
+}// ./int calcMotorSpeed()
+
+void setMotorSpeed( Adafruit_DCMotor * aMotor, int speedSetting  )
+{
+  if ( abs ( speedSetting ) < MIN_SPEED ) {
+    aMotor->setSpeed( 0 ); 
+    aMotor->run(RELEASE);
+    Serial.println("STOP");
+    return;
+  }
+
+  if ( speedSetting < 0) {   //negative speed == reverse
+    aMotor->run( BACKWARD );
+    aMotor->setSpeed( abs( speedSetting )); 
+    Serial.print("Back ");
+    Serial.println( speedSetting );
+  } else {
+    aMotor->run(FORWARD);
+    aMotor->setSpeed(speedSetting); 
+    Serial.print("Forward ");
+    Serial.println( speedSetting );
+   }
+}  
+
