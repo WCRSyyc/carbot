@@ -9,10 +9,10 @@
 
 struct txMessStru{
   int buffType;
-//  char messBuff[ 80 ];
-  int x, y, z; 
+  int x, y, z;
 };
-const unsigned long PACKET_DELAY = 1500; // milliseconds (0.5 seconds)
+const unsigned long PACKET_DELAY = 50; // milliseconds (0.05 seconds)
+// Lower values give faster response
 
 txMessStru myMessage;
 int ptr;                    // index into message buffer
@@ -45,7 +45,7 @@ void setup() {
 
   // Set the PA Level low to prevent power supply related issues since this is a
   // getting_started sketch, and the likelihood of close proximity of the devices. RF24_PA_MAX is default.
- 
+
   radio.setPALevel(RF24_PA_LOW);
 
   Serial.print("Joystick Starting up as radio ");
@@ -53,7 +53,7 @@ void setup() {
 
   // Open a pipe to write to the radio
   radio.openWritingPipe(addresses[0]);
-  radio.stopListening();    
+  radio.stopListening();
 }
 
 void loop() {
@@ -65,7 +65,7 @@ void loop() {
   if (!radio.write(&myMessage, sizeof(txMessStru))){
     Serial.println("tx error");
   }
- 
+
   delay( PACKET_DELAY );
 }
 
@@ -78,12 +78,12 @@ void getSensorData()
   myMessage.x = map( sensorValueX, 0, 1023, -255, 255 );
   myMessage.y = map( sensorValueY, 0, 1023, 255, -255 );
   myMessage.z = map( sensorValueZ, 0, 1, 1, 0 );
-  Serial.print ( "Packet: x=" );
-  Serial.print ( myMessage.x );
-  Serial.print ( ", y=" );
-  Serial.print ( myMessage.y );
-  Serial.print ( ", z=" );
-  Serial.println ( myMessage.z );
+//  Serial.print ( "Packet: x=" );
+//  Serial.print ( myMessage.x );
+//  Serial.print ( ", y=" );
+//  Serial.print ( myMessage.y );
+//  Serial.print ( ", z=" );
+//  Serial.println ( myMessage.z );
 } // ./getSensorData()
 
 /*

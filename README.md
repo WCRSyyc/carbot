@@ -1,2 +1,2 @@
 # carbot
-develop remote control then autonomous robot car
+develop software for simple remote controlled then autonomous robot car
