@@ -25,6 +25,7 @@
 
 #define MAX_MOTOR_SPEED 255
 #define MIN_MOTOR_SPEED -255
+#define TURN_FACTOR 4
 // names for motor indexes
 #define LEFT 0
 #define RIGHT 1
@@ -164,8 +165,8 @@ void getPacket()
 void adjustForTurn()
 {
   // Negative values of x turn (more) left (slower left, faster right)
-  targSpeed[ LEFT ] += joyStickData.x;
-  targSpeed[ RIGHT ] -= joyStickData.x;
+  targSpeed[ LEFT ] += ( joyStickData.x / TURN_FACTOR );
+  targSpeed[ RIGHT ] -= ( joyStickData.x / TURN_FACTOR );
 }// ./void adjustForTurn()
 
 
