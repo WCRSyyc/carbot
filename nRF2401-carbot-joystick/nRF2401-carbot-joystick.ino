@@ -1,5 +1,5 @@
 /*
- * Joystick controller for demonstration carbot
+ * Demonstration Joystick controller for carbot
  *
  * This was written as a remote control for the WCRS carbot demonstration
  * chassis.  See nRF2401-carbot-remote.
@@ -18,20 +18,27 @@
 #include "RF24.h"
 
 // Analog input pins that the joystick potentiometers are connected to
-const int analogInPinA0 = A0;  // x
-const int analogInPinA1 = A1;  // y
-const int buttonPin = 16;
+const int analogInPinA0 = A0;  // joystick x
+const int analogInPinA1 = A1;  // joystick y
+const int buttonPin = 16; // same as A2; button on joystick
 
+// the structure of (but not the actual storage for) the information to send to
+// the carbot unit.  Currently only the left and right motor speeds.
+// NOTE: this structure must be the same what the code running on the carbot
+// expects.
 struct speedSettings {
   int leftSpeed, rightSpeed;
 };
+// The combined size of the block of data to send: needed by the radio code
 const unsigned int packetSize = sizeof( speedSettings );
 
+// Constants for translating the raw analog measurments of the joystick into
+// individual motor speed settings
 const int MIN_RAW_ADC = 0;
-const int MAX_RAW_ADC = 1023; // 10 bits
-const int MAX_SPEED_SETTING = 255; // Forward
+const int MAX_RAW_ADC = 1023; // 10 bits; maximum value from analogRead
+const int MAX_SPEED_SETTING = 255; // Forward; maximum motor speed setting
 const int MIN_SPEED_SETTING = -MAX_SPEED_SETTING; // Backward
-const int MAX_TURN_DELTA = 63; // Left
+const int MAX_TURN_DELTA = 63; // Left; maximum speed increase while turning
 const int MIN_TURN_DELTA = -MAX_TURN_DELTA; // Right
 
 // (RF24) address of the remote carbot
@@ -45,11 +52,13 @@ const unsigned long PACKET_DELAY = 50; // milliseconds (0.05 seconds)
 // IDEA use variable delay: send packet when values change
 // No current need for a heartbeat to maintain a connection
 
+// Here is where the data for the carbot is actually stored, after the struct
+// was defined above
 speedSettings command;
 
 int sensorValueX = 0;        // value read from the pot
 int sensorValueY = 0;        // value read from the pot
-int sensorValueZ = 0;        // value read from the button
+int sensorButton = 0;        // value read from the button
 
 void setup() {
   Serial.begin ( 115200 );
@@ -62,27 +71,42 @@ void setup() {
 
 void loop()
 {
-  getSensorData ();
-  xyToDifferential();
-  if ( !radio.write ( &command, packetSize )) {
+  getSensorData (); // get sensorValue X, Y, and Z
+  xyToDifferential(); // calculate left and right motor speeds
+  if ( !radio.write ( &command, packetSize )) { // Send to the carbot unit
     Serial.println (F( "tx error" )); // no ACK?
   }
 
-  delay ( PACKET_DELAY );
+  delay ( PACKET_DELAY ); // Wait a bit to not flood the radio channel with more
+                          // information that the carbot can really handle
 }// ./void loop()
 
 
+/**
+ * get information about the joystick x, y, and button positions
+ *
+ * This code is based on what the actual physical joystick is capable of
+ * reporting.  In this case, the X and Y position, and whether the button is
+ * pressed.
+ *
+ * @output global sensorValueX, sensorValueX, sensorButton
+ */
 void getSensorData()
 {
   sensorValueX = analogRead ( analogInPinA0 );
   sensorValueY = analogRead ( analogInPinA1 );
-  sensorValueZ = digitalRead ( buttonPin );
+  sensorButton = digitalRead ( buttonPin );
 } // ./getSensorData()
-
 
 /**
  * Convert joystick x and y values into motor speed settings for differential
  * steering
+ *
+ * This is the code to change to adjust sensitivity of the joystick controls.
+ * The initial map function just does a linear conversion of joystick position
+ * motor speed setting.
+ *
+ * @output command structure for the carbot unit
  */
 void xyToDifferential()
 {
