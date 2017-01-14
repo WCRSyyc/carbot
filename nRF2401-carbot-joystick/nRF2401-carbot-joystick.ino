@@ -42,7 +42,7 @@ const int MAX_TURN_DELTA = 63; // Left; maximum speed increase while turning
 const int MIN_TURN_DELTA = -MAX_TURN_DELTA; // Right
 
 // (RF24) address of the remote carbot
-const byte address[] = "rCBot";
+const byte botAddress[] = "rCBot";
 
 // Set up nRF24L01 radio on SPI bus plus pins 7 & 8
 RF24 radio ( 7, 8 );
@@ -59,10 +59,12 @@ speedSettings command;
 int sensorValueX = 0;        // value read from the pot
 int sensorValueY = 0;        // value read from the pot
 int sensorButton = 0;        // value read from the button
+int lpCnt = 0;
+const int DISP_COUNT = 10;
 
 void setup() {
   Serial.begin ( 115200 );
-  Serial.print (F( "Carbot Joystick starting up" ));
+  Serial.println (F( "Carbot Joystick starting up" ));
 
   pinMode ( buttonPin, INPUT_PULLUP);
 
@@ -75,6 +77,14 @@ void loop()
   xyToDifferential(); // calculate left and right motor speeds
   if ( !radio.write ( &command, packetSize )) { // Send to the carbot unit
     Serial.println (F( "tx error" )); // no ACK?
+  }
+  lpCnt++;
+  if ( lpCnt >= DISP_COUNT ) {
+    lpCnt = 0;
+    Serial.print (F( "Left=" ));
+    Serial.print ( command.leftSpeed );
+    Serial.print (F( ", Right=" ));
+    Serial.println ( command.rightSpeed );
   }
 
   delay ( PACKET_DELAY ); // Wait a bit to not flood the radio channel with more
@@ -137,7 +147,7 @@ void xyToDifferential()
   // radio channel
   // disable auto ack
   // set payload size (packetSize == sizeof (speedSettings))
-  // set address size (len (address))
+  // set address size (len (botAddress))
 
   // This is a remote control (ground) vehicle, which should never be out of the
   // users sight.  Reduce the radio power level, since only short range will
@@ -145,7 +155,7 @@ void xyToDifferential()
   radio.setPALevel ( RF24_PA_LOW ); // RF24_PA_MAX is default
 
   // Currently one way communications, so only need a writing pipe
-  radio.openWritingPipe ( address );
+  radio.openWritingPipe ( botAddress );
 
   // Start the radio listening for data
   radio.stopListening ();
