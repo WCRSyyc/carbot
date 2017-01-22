@@ -11,7 +11,7 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
-Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 
 
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
@@ -53,14 +53,14 @@ void setup() {
 
   AFMS.begin();  // create with the default frequency 1.6KHz
   //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
-  
+
   // Set the speed to start, from 0 (off) to 255 (max speed)
   //myMotor->setSpeed(150);
  // myMotor->run(FORWARD);
   // turn on motor
   myMotorL->run(RELEASE);
   myMotorR->run(RELEASE);
-  
+
   radio.begin();
 
   // Set the PA Level low to prevent power supply related issues since this is a
@@ -83,7 +83,7 @@ void setup() {
 void loop() {
 
 
-/****************** Ping Out Role ***************************/  
+/****************** Ping Out Role ***************************/
 
  //radio.startListening();                                    // Now, continue listening
 /*
@@ -91,17 +91,17 @@ void loop() {
       if (micros() - started_waiting_at > 200000 ){            // If waited longer than 200ms, indicate timeout and exit while loop
           timeout = true;
           break;
-      }      
+      }
     }
 */
-  
+
                                                                      // Variable for the received timestamp
    while (radio.available()) {                     // While there is data ready
       //Serial.println("available");
       radio.read( &myMessage, sizeof(txMessStru) );  // Get the payload one char only
-     
+
       //Serial.println(myMessage.messBuff);
-    
+
      // strncpy( myMessage.messBuff,"empty", 6);
    Serial.print(myMessage.x);
    Serial.print(", ");
@@ -113,31 +113,29 @@ void loop() {
     myMotorL->run(RELEASE);
     myMotorR->run(RELEASE);
      Serial.println("Release");
- 
-  
+
+
   }else if (myMessage.y <= 0){   //negative speed == reverse
     myMotorL->run(BACKWARD);
     myMotorR->run(BACKWARD);
     Serial.print("Back ");
     Serial.println(abs(myMessage.y));
-    myMotorL->setSpeed(abs(myMessage.y)); 
-    myMotorR->setSpeed(abs(myMessage.y)); 
+    myMotorL->setSpeed(abs(myMessage.y));
+    myMotorR->setSpeed(abs(myMessage.y));
 
   }else{
-     myMotorL->run(FORWARD);
-     myMotorR->run(FORWARD);
+    myMotorL->run(FORWARD);
+    myMotorR->run(FORWARD);
     Serial.print("Forward ");
     Serial.println(myMessage.y);
-    myMotorL->setSpeed(myMessage.y); 
+    myMotorL->setSpeed(myMessage.y);
     myMotorR->setSpeed(myMessage.y);
   }
-   
+
    //Serial.println(myMessage.messBuff);
 
 
 
-   
-   } // end of while radio avail
-}    //loop     
 
-  
+   } // end of while radio avail
+}    //loop

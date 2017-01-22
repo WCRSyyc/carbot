@@ -15,7 +15,7 @@ const unsigned long PACKET_DELAY = 500; // milliseconds (0.5 seconds)
 
 txMessStru myMessage;
 int ptr;                    // index into message buffer
-char workBuff[ 6 ];         // ascii to char work buffer
+char workBuff[ 6 ];         // binary to ascii work buffer
 
 const int analogInPinA0 = A0;  // Analog input pin that the potentiometer is attached to
 const int analogInPinA1 = A1;  // Analog input pin that the potentiometer is attached to
@@ -39,29 +39,30 @@ byte addresses[][ 6 ] = { "1Node", "2Node" };
 
 void setup() {
   Serial.begin( 115200 );
-  pinMode( 16, INPUT_PULLUP);
+  pinMode( 16, INPUT_PULLUP );
   radio.begin();
 
   // Set the PA Level low to prevent power supply related issues since this is a
-  // getting_started sketch, and the likelihood of close proximity of the devices. RF24_PA_MAX is default.
- 
-  radio.setPALevel(RF24_PA_LOW);
+  // getting_started sketch, and the likelihood of close proximity of the
+  // devices. RF24_PA_MAX is default.
+
+  radio.setPALevel( RF24_PA_LOW );
 
   // Open a pipe to write to the radio
-  radio.openWritingPipe(addresses[0]);
-  radio.stopListening();    
+  radio.openWritingPipe( addresses[ 0 ]);
+  radio.stopListening();
 }
 
 void loop() {
   getSensorData();
   buildPacket();
 
-  Serial.println(myMessage.messBuff);
+  Serial.println( myMessage.messBuff );
 
-  if (!radio.write(&myMessage, sizeof(txMessStru))){
-    Serial.println("tx error");
+  if( !radio.write( &myMessage, sizeof( txMessStru ))) {
+    Serial.println ( F( "tx error" ));
   }
- 
+
   delay( PACKET_DELAY );
 }
 
@@ -85,14 +86,11 @@ void buildPacket()
   myMessage.messBuff[ ptr - 1 ] = 0;// clear trailing comma
 }
 
-
 void buffAppend( const int value )
 {
-  itoa( value, workBuff, 10);
+  itoa( value, workBuff, 10 );
   strncpy( &myMessage.messBuff[ ptr ], workBuff, strlen( workBuff ));
   ptr += strlen( workBuff );
   myMessage.messBuff[ ptr ] = ',';
   ptr++;
 }
-
-
