@@ -7,5 +7,8 @@ Folders nRF2401-carbot-joystick and nRF2401-carbot-remote contain sketches to ru
 ### Older Remote Control
 Folders nRF2401-Joy2 and nRF2401-motors03 contain sketches to run (respectively) a joystick controller transmitter unit, and a 2 wheeled carbot receiver.  In this version pair, the transmitter code sends the raw joystick X and Y position values, as well as the integrated push button switch state to the recieving carbot unit.  The motor controlling sketch interprets and translates those values into forward and back speed settings for the left and right motors.
 
+## joystickTest
+This sketch is a standalone program to display the changing values as the joystick on the shield is manipulated.  An easy way to verify that the shield is wired correctly, and what the orrientation is.  Figure out which direction is forward and back, versus left and right.  Verify that the readings change from 0 to full range for each axis.  If the joystick includes a switch on the button, verify what the pressed and released state values are.
+
 ## motor and speed control testing
 DC4MotorTest is a simple motor speed cycling test sketch (to be) used to verify that the motors are connected to the correct motor shield ports, and that the forward speed settings correspond to the wheel forward direction.

@@ -25,7 +25,7 @@
 
 // motor controller port numbers where motors are physically attached
 #define LEFT_MOTOR_PORT 1
-#define RIGHT_MOTOR_PORT 3
+#define RIGHT_MOTOR_PORT 4
 
 // The range around zero that is treated as actual zero speed setting
 #define ZERO_DEAD_BAND 10

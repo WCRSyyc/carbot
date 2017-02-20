@@ -1,14 +1,13 @@
 /*
-This is a test sketch for the Adafruit assembled Motor Shield for Arduino v2
-It won't work with v1.x motor shields! Only for the v2's with built in PWM
-control
+This is a motor shield (H bridge) test sketch
 
 Sequence through the motors, ramping speed from zero to forward maximum, then to
 backward maximum, and back to zero.  Use to verify correct connections, and to
 make sure the programmed forward direction is really the wheel foward direction.
 
-For use with the Adafruit Motor Shield v2
+For use with the Adafruit Motor Shield v2 with built in PWM
 ---->	http://www.adafruit.com/products/1438
+It won't work with v1.x motor shields!
 */
 
 #include <Wire.h>
@@ -57,15 +56,16 @@ void setup() {
 }
 
 void loop() {
-  // Comment out all but the motors to be tested
+  // Comment out all but the motors to be tested.  Or accept delays during
+  // testing where no motors are connected.
   Serial.print ( F( "motor 1: " ));
   rampMotor ( myMotor1 );
-//  Serial.print ( F( "motor 2: " ));
-//  rampMotor ( myMotor2 );
+  Serial.print ( F( "motor 2: " ));
+  rampMotor ( myMotor2 );
   Serial.print ( F( "motor 3: " ));
   rampMotor ( myMotor3 );
-//  Serial.print ( F( "motor 4: " ));
-//  rampMotor ( myMotor4 );
+  Serial.print ( F( "motor 4: " ));
+  rampMotor ( myMotor4 );
   delay ( MOTOR_CHANGE_DELAY );
 }
 
