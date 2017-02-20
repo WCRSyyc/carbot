@@ -7,7 +7,7 @@
  * This contains the logic to turn the joystick x, y values into left and right
  * motor speed values, for differential steering.
  *
- * Updated: Dec 2016 by H Phil Duby
+ * Updated: Feb 19 2017 by H Phil Duby
  *
  * Arduino UNO
  * RF2401 transceiver (through custom shield (protoshield))
@@ -16,15 +16,18 @@
 
 #include <SPI.h>
 #include "RF24.h"
+// Only include some counting and reporting when need to debug something that is
+// going wrong.  Uncomment the following line to turn on the extra code.
+//#define DEBUG
 
 // Analog input pins that the joystick potentiometers are connected to
-const int analogInPinA0 = A0;  // joystick x
-const int analogInPinA1 = A1;  // joystick y
-const int buttonPin = 16; // same as A2; button on joystick
+const int joystickXAxisPin = A0;  // joystick x
+const int joystickYAxisPin = A1;  // joystick y
+const int joystickButtonPin = 16; // Digital pin matching A2; button on joystick
 
 // the structure of (but not the actual storage for) the information to send to
 // the carbot unit.  Currently only the left and right motor speeds.
-// NOTE: this structure must be the same what the code running on the carbot
+// NOTE: this structure must be the same as what the code running on the carbot
 // expects.
 struct speedSettings {
   int leftSpeed, rightSpeed;
@@ -38,7 +41,7 @@ const int MIN_RAW_ADC = 0;
 const int MAX_RAW_ADC = 1023; // 10 bits; maximum value from analogRead
 const int MAX_SPEED_SETTING = 255; // Forward; maximum motor speed setting
 const int MIN_SPEED_SETTING = -MAX_SPEED_SETTING; // Backward
-const int MAX_TURN_DELTA = 63; // Left; maximum speed increase while turning
+const int MAX_TURN_DELTA = 63; // maximum motor speed [in/de]crease while turning
 const int MIN_TURN_DELTA = -MAX_TURN_DELTA; // Right
 
 // (RF24) address of the remote carbot
@@ -50,23 +53,28 @@ RF24 radio ( 7, 8 );
 const unsigned long PACKET_DELAY = 50; // milliseconds (0.05 seconds)
 // Lower values give faster response
 // IDEA use variable delay: send packet when values change
-// No current need for a heartbeat to maintain a connection
+// - would need to include a heart beat when the speed settings are not zero,
+//   since the motor speed goes to zero if no signal has been received for awhile.
 
 // Here is where the data for the carbot is actually stored, after the struct
 // was defined above
 speedSettings command;
 
-int sensorValueX = 0;        // value read from the pot
-int sensorValueY = 0;        // value read from the pot
-int sensorButton = 0;        // value read from the button
+int sensorValueX = 0;        // value read from the joystick pot
+int sensorValueY = 0;        // value read from the joystick pot
+int sensorButton = 0;        // value read from the joystick button
+#ifdef DEBUG
 int lpCnt = 0;
 const int DISP_COUNT = 10;
+#endif
 
 void setup() {
+#ifdef DEBUG
   Serial.begin ( 115200 );
   Serial.println (F( "Carbot Joystick starting up" ));
+#endif
 
-  pinMode ( buttonPin, INPUT_PULLUP);
+  pinMode ( joystickButtonPin, INPUT_PULLUP);
 
   initRemoteControl ();
 }
@@ -78,6 +86,7 @@ void loop()
   if ( !radio.write ( &command, packetSize )) { // Send to the carbot unit
     Serial.println (F( "tx error" )); // no ACK?
   }
+#ifdef DEBUG
   lpCnt++;
   if ( lpCnt >= DISP_COUNT ) {
     lpCnt = 0;
@@ -86,6 +95,7 @@ void loop()
     Serial.print (F( ", Right=" ));
     Serial.println ( command.rightSpeed );
   }
+#endif
 
   delay ( PACKET_DELAY ); // Wait a bit to not flood the radio channel with more
                           // information that the carbot can really handle
@@ -103,9 +113,9 @@ void loop()
  */
 void getSensorData()
 {
-  sensorValueX = analogRead ( analogInPinA0 );
-  sensorValueY = analogRead ( analogInPinA1 );
-  sensorButton = digitalRead ( buttonPin );
+  sensorValueX = analogRead ( joystickXAxisPin );
+  sensorValueY = analogRead ( joystickYAxisPin );
+  sensorButton = digitalRead ( joystickButtonPin );
 } // ./getSensorData()
 
 /**
