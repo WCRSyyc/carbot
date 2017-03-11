@@ -7,7 +7,7 @@
  * This contains the logic to turn the joystick x, y values into left and right
  * motor speed values, for differential steering.
  *
- * Updated: Feb 19 2017 by H Phil Duby
+ * Updated: Mar 11 2017 by H Phil Duby
  *
  * Arduino UNO
  * RF2401 transceiver (through custom shield (protoshield))
@@ -20,10 +20,15 @@
 // going wrong.  Uncomment the following line to turn on the extra code.
 //#define DEBUG
 
-// Analog input pins that the joystick potentiometers are connected to
-const int joystickXAxisPin = A0;  // joystick x
-const int joystickYAxisPin = A1;  // joystick y
+// Analog input pins that the joystick potentiometers are connected to, plus
+// flags to reverse the meaning of left, right and forward, back for the
+// joystick.  The values in the following block should be all that needs to be
+// changed to handle different joystick wiring. the axis pins need to be analog.
+const int joystickXAxisPin = A0;  // joystick x (left and right)
+const int joystickYAxisPin = A1;  // joystick y (forward and back)
 const int joystickButtonPin = 16; // Digital pin matching A2; button on joystick
+const int xInversion = 1; // 1 == normal; -1 = reverse left and right
+const int yInversion = 1; // 1 == normal; -1 = reverse forward and back
 
 // the structure of (but not the actual storage for) the information to send to
 // the carbot unit.  Currently only the left and right motor speeds.
@@ -39,9 +44,9 @@ const unsigned int packetSize = sizeof( speedSettings );
 // individual motor speed settings
 const int MIN_RAW_ADC = 0;
 const int MAX_RAW_ADC = 1023; // 10 bits; maximum value from analogRead
-const int MAX_SPEED_SETTING = 255; // Forward; maximum motor speed setting
+const int MAX_SPEED_SETTING = yInversion * 255; // Forward; maximum motor speed setting
 const int MIN_SPEED_SETTING = -MAX_SPEED_SETTING; // Backward
-const int MAX_TURN_DELTA = 63; // maximum motor speed [in/de]crease while turning
+const int MAX_TURN_DELTA = xInversion * 63; // maximum motor speed [in/de]crease while turning
 const int MIN_TURN_DELTA = -MAX_TURN_DELTA; // Right
 
 // (RF24) address of the remote carbot
