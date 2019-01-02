@@ -1,6 +1,8 @@
 # carbot
 Develop software for simple remote controlled then autonomous robot car
 
+This has been switched to a wrapper repository.  The actual sketches are each in their own repository.  This includes them as submodules, and adds extra information about using them.
+
 ## Remote Control
 Folders nRF2401-carbot-joystick and nRF2401-carbot-remote contain sketches to run (respectively) a joystick controller transmitter unit, and a 2 wheeled carbot receiver.
 
@@ -17,6 +19,10 @@ To make the remote unit easier to steer, the maximum speed difference between th
 This sketch receives the motor speed settings and uses them to update the target speed values.  Whether new values have been received or not, the sketch sketch 'steps' from the current (actual) speed settings toward the target.  This, combined with the acceleration and deceleration (change) wait time values, limit how fast the speed can change.  This is used both to give a bit more realistic acceleration and braking, and to reduce the stress on the physical car unit.  Our initial prototype was built with materials that do not have a lot of structural strength.  Repeated, too rapid change in speed risks tearing the motors from the chassis.  The remote sketch also includes a timeout, so that if the radio signal is lost, the car will stop.
 
 The sketch implements all of the physics to manage the acceleration properties of the remote unit.  It is intended for a 2 wheeled robot with [differential steering](https://github.com/WCRSyyc/carbot/wiki/differential-steering).  The inputs are the desired left and right motor speeds.  The sketch adjust the actual speed values towards those values, deliberately limited by the simulation mass and motor power.
+
+The current acceleration logic is very simplified.  It is using a fixed (maximum) change in the motor power settings per step.  DC motors have maximum torque at zero speed.  To implement constant acceleration, different stepping logic is needed, with the smallest (or slowest changing) steps near zero speed, and larger steps as the speed increases.
+
+Next step beyond that would be to define an engine `power curve`, then simulate that based on the actual motor, wheel, and chasis characteristics.
 
 ### Older Remote Control
 Folders nRF2401-Joy2 and nRF2401-motors03 contain sketches to run (respectively) a joystick controller transmitter unit, and a 2 wheeled carbot receiver.  In this version pair, the transmitter code sends the raw joystick X and Y position values, as well as the integrated push button switch state to the receiving carbot unit.  The motor controlling sketch interprets and translates those values into forward and back speed settings for the left and right motors.

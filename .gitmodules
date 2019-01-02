@@ -1,0 +1,24 @@
+[submodule "DC4MotorTest"]
+	path = DC4MotorTest
+	url = https://github.com/WCRSyyc/DC4MotorTest.git
+[submodule "joystickTest"]
+	path = joystickTest
+	url = https://github.com/WCRSyyc/joystickTest.git
+[submodule "nRF2401-carbot-joystick"]
+	path = nRF2401-carbot-joystick
+	url = https://github.com/WCRSyyc/nRF2401-carbot-joystick.git
+[submodule "nRF2401-carbot-remote"]
+	path = nRF2401-carbot-remote
+	url = https://github.com/WCRSyyc/nRF2401-carbot-remote.git
+[submodule "nRF2401-Joy2"]
+	path = nRF2401-Joy2
+	url = https://github.com/WCRSyyc/nRF2401-Joy2.git
+[submodule "nRF2401LCD"]
+	path = nRF2401LCD
+	url = https://github.com/WCRSyyc/nRF2401LCD.git
+[submodule "nRF2401-motors"]
+	path = nRF2401-motors
+	url = https://github.com/WCRSyyc/nRF2401-motors.git
+[submodule "nRF2401-motors03"]
+	path = nRF2401-motors03
+	url = https://github.com/WCRSyyc/nRF2401-motors03.git
